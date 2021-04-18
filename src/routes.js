@@ -46,10 +46,9 @@ router.route("/doctors")
     })
     .post((req, res) => {
         console.log("POST /doctors");
-
-        res.status(501).send();
-        /*
+        
         let empty = false
+        //console.log(req.body)
 
         if(!req.body) {
             res.status(500).send("Please provide a name and list of seasons for the doctor")
@@ -65,17 +64,14 @@ router.route("/doctors")
         }
 
         if(empty == false) {
-            console.log("here")
+
             const newDoc = req.body;
-            console.log("here2")
-            let docLength = 0;
-            Doctor.find({}).then(data => {docLength = data.length})
-            .then(response => {
-                console.log("here3")
-                newDoc.doc_id = "d" + (docLength + 1)
-                Doctor.create(newDoc).save().then(x => {
-                    console.log(newDoc)
-                    res.status(201).send(newDoc)
+            
+            Doctor.find({})
+            .then(data => {
+                newDoc.doc_id = "d" + (data.length + 1)
+                Doctor.create(newDoc).save().then(response => {
+                    res.status(201).send(response)
                 }).catch(err => {
                     res.status(500).send(err)
                 });
@@ -83,9 +79,7 @@ router.route("/doctors")
                 res.status(500).send(err)
             });
         } 
-        else {
-            res.status(500).send("Please provide a name and list of seasons for the doctor")
-        }*/
+        
     });
 
 // optional:
@@ -113,7 +107,28 @@ router.route("/doctors/:id")
     })
     .patch((req, res) => {
         console.log(`PATCH /doctors/${req.params.id}`);
-        res.status(501).send();
+
+        Doctor.findById(req.params.id)
+        .then(doc => {
+            Doctor.findOneAndUpdate(
+                { _id: req.params.id }, 
+                {
+                    "name": req.body.name ? req.body.name : doc.name,
+                    "seasons": req.body.seasons ? req.body.seasons : doc.seasons,
+                },
+                { new: true } // means you want to return the updated artist
+            ).then(newDoc =>
+                {
+                    res.status(200).send(newDoc)
+                }).catch(err => {
+                    res.status(404).send(err)
+                })
+            
+        }).catch(err =>{
+            res.status(404).send("Doctor with id " + req.params.id + " not found.")
+        })
+
+        
     })
     .delete((req, res) => {
         console.log(`DELETE /doctors/${req.params.id}`);
@@ -210,7 +225,47 @@ router.route("/companions")
     })
     .post((req, res) => {
         console.log("POST /companions");
-        res.status(501).send();
+
+        let empty = false
+
+        if(!req.body) {
+            res.status(500).send("Please provide a name, character, list of doctors, list of seasons, and alive boolean for the companion")
+            empty = true
+        }
+        if(!req.body.name) {
+            res.status(500).send("Please provide a name for the companion")
+            empty = true
+        }
+        if(!req.body.character) {
+            res.status(500).send("Please provide a character name for the companion")
+            empty = true
+        }
+        if(!req.body.doctors) {
+            res.status(500).send("Please provide a list of doctors for the companion")
+            empty = true
+        }
+        if(!req.body.seasons) {
+            res.status(500).send("Please provide a list of seasons for the companion")
+            empty = true
+        }
+        if(!req.body.alive) {
+            res.status(500).send("Please provide whether the companion is alive")
+            empty = true
+        }
+
+
+        if (empty == false) {
+            const newComp = req.body;
+            newComp._id = "c" + Date.now()
+            //console.log("output", newDoc)
+
+            Companion.create(newComp).save().then(response => {
+                res.status(201).send(response)
+            }).catch(err => {
+                res.status(500).send(err)
+            });
+                    
+        }
     });
 
 router.route("/companions/crossover")
@@ -256,7 +311,29 @@ router.route("/companions/:id")
     })
     .patch((req, res) => {
         console.log(`PATCH /companions/${req.params.id}`);
-        res.status(501).send();
+
+        Companion.findById(req.params.id)
+        .then(comp => {
+            Companion.findOneAndUpdate(
+                { _id: req.params.id }, 
+                {
+                    "name": req.body.name ? req.body.name : comp.name,
+                    "character": req.body.character ? req.body.character : comp.character,
+                    "doctors": req.body.doctors ? req.body.doctors : comp.doctors,
+                    "seasons": req.body.seasons ? req.body.seasons : comp.seasons,
+                    "alive": req.body.alive ? req.body.alive : comp.alive
+                },
+                { new: true } // means you want to return the updated artist
+            ).then(response =>
+                {
+                    res.status(200).send(response)
+                }).catch(err => {
+                    res.status(404).send(err)
+                })
+            
+        }).catch(err =>{
+            res.status(404).send("Doctor with id " + req.params.id + " not found.")
+        })
     })
     .delete((req, res) => {
         console.log(`DELETE /companions/${req.params.id}`);
